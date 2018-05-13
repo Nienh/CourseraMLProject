@@ -1,0 +1,124 @@
+---
+title: "Machine Learning Course Project: Determining how well an exercise is done"
+output: html_document
+---
+##Executive Summary
+The goal of this project will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants to predict how well study participants performed certain exercises in a test set of measurements. We fit three models (decision tree, random forest, and boosting) to the training data and determined the random forest method has the highest accuracy (99%).
+
+"Classe" predictions from testing data:
+`B A B A A E D B A A B C B A E E A B B B`
+
+##Data
+The data for this project come from this source: http://groupware.les.inf.puc-rio.br/har
+
+Six participants were asked to perform were asked to perform barbell lifts correctly and incorrectly in 5 different ways:
+
+* Class A: exactly according to the specification 
+
+* Class B: throw- ing the elbows to the front
+
+* Class C: lifting the dumbbell only halfway 
+
+* Class D: lowering the dumbbell only halfway
+
+* Class E: throwing the hips to the front
+
+while monitored using Euler angles (roll, pitch and yaw), raw accelerometer, gyroscope and magnetometer readings.
+
+##Data Processing
+Download and tidy training/testing data.  Narrow down features.
+
+```{r setup, results = "hide"}
+library(data.table); library(caret); library (kernlab); library(AppliedPredictiveModeling); library(dplyr); library(rpart); library(randomForest)
+
+training <- read.csv(url("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"), na.strings = c("NA", "", "#DIV0!"))
+testing <- read.csv(url("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"), na.strings = c("NA", "", "#DIV0!"))
+
+##Remove columns with NAs
+training<-training[,colSums(is.na(training)) == 0]
+testing <-testing[,colSums(is.na(testing)) == 0]
+
+##Remove near zero variables
+training <- select(training, -nearZeroVar(training))
+testing <- select(testing, -nearZeroVar(testing))
+
+##Remove irrelevant predictors (e.g. timestamp, index, name)
+training <- training[,-c(1:7)]
+testing <- testing[,-c(1:7)]
+```
+
+```{r}
+names(training)
+```
+
+##Partition training data into training and test sets for cross-validation
+```{r}
+set.seed(2018)
+inTrain <- createDataPartition(training$classe, p=3/4, list=FALSE)
+training_train <- training[inTrain,]
+training_test <- training[-inTrain,]
+```
+
+##Model 1: Decision Tree
+```{r}
+##Decision Tree
+set.seed(2018)
+model_rpart <- rpart(classe ~., data = training_train, method = "class")
+
+pred_rpart <- predict(model_rpart, newdata= training_test, type="class")
+confusionMatrix(pred_rpart, training_test$classe)
+
+#Plot Decision Tree
+library(rpart.plot)
+rpart.plot(model_rpart)
+```
+
+
+##Model 2: Random Forest
+Given the long run-times, I took a hint from the Coursera discussion forums to speed up the train function for rf - credit to https://github.com/lgreski/datasciencectacontent/blob/master/markdown/pml-randomForestPerformance.md
+```{r}
+##Random Forest
+set.seed(2018)
+
+    #Follow steps from "Improving Performance of Random Forest in caret::train()" cited above to improve rf run time
+    #Step 1: Configure parallel processing
+        library(parallel)
+        library(doParallel)
+        cluster <- makeCluster(detectCores() - 1) # convention to leave 1 core for OS
+        registerDoParallel(cluster)
+    
+    #Step 2: Configure trainControl object
+        fitControl <- trainControl(method = "cv",number = 5,allowParallel = TRUE)
+    
+    #Step 3: Develop training model
+        model_rf <- train(classe ~., data = training_train, method = "rf", prox=TRUE, trControl = fitControl)
+    
+    #Step 4: De-register parallel processing cluster
+        stopCluster(cluster)
+        registerDoSEQ()
+
+#Run testing data through the model
+pred_rf <- predict(model_rf, training_test)
+confusionMatrix(training_test$classe, pred_rf)
+        
+```
+
+##Model 3: Boosting
+```{r}
+#Boosting
+set.seed(2018)
+fitControl2 <- trainControl(method = "repeatedcv", number = 5, repeats = 1)
+model_gbm <- train(classe ~ ., method="gbm", data=training_train,trControl=fitControl2, verbose=FALSE)
+
+#Run testing data through the model    
+pred_gbm <- predict(model_gbm, training_test)
+confusionMatrix(training_test$classe, pred_gbm)
+```
+
+##Conclusion
+The random forest model produces the highest accuracy (99%) on our training test set, so we will use random forest to predict classe results from the testing data set.
+
+```{r}
+predict(model_rf, testing)
+```
+
