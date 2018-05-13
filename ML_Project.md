@@ -1,10 +1,6 @@
----
-title: "Machine Learning Course Project: Determining how well an exercise is done"
-output: 
-  html_document: 
-    keep_md: yes
----
 
+Machine Learning Course Project: Determining how well an exercise is done
+=======
 
 Executive Summary
 ---------
