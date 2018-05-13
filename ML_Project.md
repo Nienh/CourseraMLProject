@@ -4,13 +4,18 @@ output:
   html_document: 
     keep_md: yes
 ---
-##Executive Summary
+
+
+Executive Summary
+---------
+
 The goal of this project will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants to predict how well study participants performed certain exercises in a test set of measurements. We fit three models (decision tree, random forest, and boosting) to the training data and determined the random forest method has the highest accuracy (99%).
 
 "Classe" predictions from testing data:
 `B A B A A E D B A A B C B A E E A B B B`
 
-##Data
+Data
+---------
 The data for this project come from this source: http://groupware.les.inf.puc-rio.br/har
 
 Six participants were asked to perform were asked to perform barbell lifts correctly and incorrectly in 5 different ways:
@@ -27,7 +32,8 @@ Six participants were asked to perform were asked to perform barbell lifts corre
 
 while monitored using Euler angles (roll, pitch and yaw), raw accelerometer, gyroscope and magnetometer readings.
 
-##Data Processing
+Data Processing
+------------
 Download and tidy training/testing data.  Narrow down features.
 
 
@@ -78,8 +84,8 @@ names(training)
 ## [52] "classe"
 ```
 
-##Partition training data into training and test sets for cross-validation
-
+Partition training data into training and test sets for cross-validation
+---------
 ```r
 set.seed(2018)
 inTrain <- createDataPartition(training$classe, p=3/4, list=FALSE)
@@ -87,8 +93,8 @@ training_train <- training[inTrain,]
 training_test <- training[-inTrain,]
 ```
 
-##Model 1: Decision Tree
-
+Model 1: Decision Tree
+---------
 ```r
 ##Decision Tree
 set.seed(2018)
@@ -141,7 +147,8 @@ rpart.plot(model_rpart)
 ![](ML_Project_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
 
 
-##Model 2: Random Forest
+Model 2: Random Forest
+--------
 Given the long run-times, I took a hint from the Coursera discussion forums to speed up the train function for rf - credit to https://github.com/lgreski/datasciencectacontent/blob/master/markdown/pml-randomForestPerformance.md
 
 ```r
@@ -215,7 +222,8 @@ confusionMatrix(training_test$classe, pred_rf)
 ## Balanced Accuracy      0.9988   0.9932   0.9824   0.9961   1.0000
 ```
 
-##Model 3: Boosting
+Model 3: Boosting
+--------
 
 ```r
 #Boosting
@@ -262,7 +270,8 @@ confusionMatrix(training_test$classe, pred_gbm)
 ## Balanced Accuracy      0.9852   0.9666   0.9602   0.9777   0.9866
 ```
 
-##Conclusion
+Conclusion
+-------
 The random forest model produces the highest accuracy (99%) on our training test set, so we will use random forest to predict classe results from the testing data set.
 
 
