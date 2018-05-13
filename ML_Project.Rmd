@@ -1,6 +1,8 @@
 ---
 title: "Machine Learning Course Project: Determining how well an exercise is done"
-output: html_document
+output: 
+  html_document: 
+    keep_md: yes
 ---
 ##Executive Summary
 The goal of this project will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants to predict how well study participants performed certain exercises in a test set of measurements. We fit three models (decision tree, random forest, and boosting) to the training data and determined the random forest method has the highest accuracy (99%).
